@@ -26,7 +26,12 @@ function App() {
       setVocab(data);
       saveVocab(data);
     } catch (err: any) {
-      setError(err.message || 'An error occurred while generating vocabulary.');
+      const errorMessage = err.message || '';
+      if (errorMessage.includes('429') || errorMessage.includes('quota')) {
+        setError("Our daily AI quota has been reached! Please come back later to generate a new word.");
+      } else {
+        setError(errorMessage || 'An error occurred while generating vocabulary.');
+      }
     } finally {
       setLoading(false);
     }
