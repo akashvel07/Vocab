@@ -45,7 +45,7 @@ function App() {
         <p>Learn a new word every day with AI-generated visual context</p>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '12px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '12px' }}>
         <button 
           className={`button ${activeTab === 'daily' ? 'active' : ''}`}
           style={{ background: activeTab === 'daily' ? 'var(--accent-color)' : 'transparent', border: 'none' }}
@@ -83,7 +83,7 @@ function App() {
           </div>
 
           {error && (
-            <div style={{ color: '#ef4444', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', marginBottom: '1rem' }}>
+            <div style={{ color: '#ef4444', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', marginBottom: '1rem', wordWrap: 'break-word' }}>
               {error}
             </div>
           )}
