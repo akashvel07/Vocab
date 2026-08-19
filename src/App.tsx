@@ -1,28 +1,30 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Settings, Sparkles } from 'lucide-react';
+import { Sparkles, BookOpen, Clock, Gamepad2 } from 'lucide-react';
 import { DailyVocabCard } from './components/DailyVocabCard';
-import { SettingsModal } from './components/SettingsModal';
+import { HistoryView } from './components/HistoryView';
+import { QuickTestView } from './components/QuickTestView';
+import { MiniGameLoader } from './components/MiniGameLoader';
 import { generateDailyVocab } from './services/aiService';
+import { saveVocab } from './services/storageService';
 import type { DailyVocab } from './services/aiService';
+
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+
+type Tab = 'daily' | 'history' | 'test';
 
 function App() {
   const [vocab, setVocab] = useState<DailyVocab | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+  const [activeTab, setActiveTab] = useState<Tab>('daily');
 
-  const loadVocab = useCallback(async (keyToUse: string) => {
-    if (!keyToUse) {
-      setIsSettingsOpen(true);
-      return;
-    }
-
+  const loadVocab = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await generateDailyVocab(keyToUse);
+      const data = await generateDailyVocab(API_KEY);
       setVocab(data);
+      saveVocab(data);
     } catch (err: any) {
       setError(err.message || 'An error occurred while generating vocabulary.');
     } finally {
@@ -31,19 +33,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (apiKey && !vocab && !loading && !error) {
-      loadVocab(apiKey);
+    if (!vocab && !loading && !error && activeTab === 'daily') {
+      loadVocab();
     }
-  }, [apiKey, vocab, loading, error, loadVocab]);
-
-  const handleSaveApiKey = (key: string) => {
-    localStorage.setItem('gemini_api_key', key);
-    setApiKey(key);
-    setIsSettingsOpen(false);
-    if (!vocab) {
-      loadVocab(key);
-    }
-  };
+  }, [vocab, loading, error, loadVocab, activeTab]);
 
   return (
     <div className="app-container">
@@ -52,49 +45,61 @@ function App() {
         <p>Learn a new word every day with AI-generated visual context</p>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '12px' }}>
         <button 
-          className="button"
-          onClick={() => loadVocab(apiKey)}
-          disabled={loading || !apiKey}
+          className={`button ${activeTab === 'daily' ? 'active' : ''}`}
+          style={{ background: activeTab === 'daily' ? 'var(--accent-color)' : 'transparent', border: 'none' }}
+          onClick={() => setActiveTab('daily')}
         >
-          <Sparkles size={18} />
-          {loading ? 'Generating...' : 'Generate New Word'}
+          <BookOpen size={18} /> Daily Word
         </button>
         <button 
-          className="button"
-          style={{ background: 'rgba(255,255,255,0.1)', color: 'white' }}
-          onClick={() => setIsSettingsOpen(true)}
+          className={`button ${activeTab === 'history' ? 'active' : ''}`}
+          style={{ background: activeTab === 'history' ? 'var(--accent-color)' : 'transparent', border: 'none' }}
+          onClick={() => setActiveTab('history')}
         >
-          <Settings size={18} />
+          <Clock size={18} /> History
+        </button>
+        <button 
+          className={`button ${activeTab === 'test' ? 'active' : ''}`}
+          style={{ background: activeTab === 'test' ? 'var(--accent-color)' : 'transparent', border: 'none' }}
+          onClick={() => setActiveTab('test')}
+        >
+          <Gamepad2 size={18} /> Quick Test
         </button>
       </div>
 
-      {error && (
-        <div style={{ color: '#ef4444', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>
-          {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="glass-card" style={{ height: '400px' }}>
-          <div className="skeleton" style={{ width: '100%', height: '100%' }}></div>
-        </div>
-      ) : vocab ? (
-        <DailyVocabCard vocab={vocab} />
-      ) : (
-        !loading && !error && (
-          <div className="glass-card" style={{ textAlign: 'center', justifyContent: 'center' }}>
-            <p>Please provide your Gemini API key to start learning.</p>
+      {activeTab === 'daily' && (
+        <>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+            <button 
+              className="button"
+              onClick={loadVocab}
+              disabled={loading}
+            >
+              <Sparkles size={18} />
+              {loading ? 'Generating...' : 'Generate New Word'}
+            </button>
           </div>
-        )
+
+          {error && (
+            <div style={{ color: '#ef4444', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', marginBottom: '1rem' }}>
+              {error}
+            </div>
+          )}
+
+          {loading ? (
+            <MiniGameLoader />
+          ) : vocab ? (
+            <DailyVocabCard vocab={vocab} />
+          ) : null}
+        </>
       )}
 
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
-        onSave={handleSaveApiKey}
-        onClose={() => setIsSettingsOpen(false)}
-      />
+      {activeTab === 'history' && <HistoryView />}
+      
+      {activeTab === 'test' && <QuickTestView />}
+      
     </div>
   );
 }

@@ -38,10 +38,17 @@ Provide a highly detailed, descriptive image generation prompt (max 500 characte
 
 export async function generateDailyVocab(apiKey: string): Promise<DailyVocab> {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+  const model = genAI.getGenerativeModel({ 
+    model: 'gemini-3.6-flash',
+    generationConfig: {
+      temperature: 1.0, // High temperature for maximum randomness
+    }
+  });
 
-  const textPrompt = `Generate a useful, interesting daily vocabulary word for a language learner. 
-  It should not be too basic, but not overly obscure (e.g., words like 'ephemeral', 'serene', 'cacophony', 'ubiquitous').
+  const randomSeed = Math.floor(Math.random() * 1000000);
+  const textPrompt = `Generate a completely random, useful, and interesting daily vocabulary word for a language learner. 
+  Randomization seed: ${randomSeed} (Use this to ensure a highly unique word is selected).
+  It should not be too basic, but not overly obscure.
   Respond strictly in JSON format with the following keys:
   - word
   - definition
